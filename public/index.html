@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Islamic Shorts Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#060b14;--surface:#0d1525;--card:#111d30;--border:#1e2f4a;
+  --gold:#c9a84c;--gold2:#f0c878;--green:#22c55e;--red:#ef4444;
+  --text:#e8eef8;--muted:#6b82a0;--blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans Bengali',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* geometric bg pattern */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(201,168,76,.08),transparent),radial-gradient(ellipse 50% 40% at 100% 80%,rgba(59,130,246,.05),transparent);pointer-events:none;z-index:0}
+
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px;position:relative;z-index:1}
+
+/* header */
+.header{text-align:center;padding:32px 0 28px;border-bottom:1px solid var(--border)}
+.header-icon{font-size:42px;margin-bottom:10px}
+.header h1{font-family:'Amiri',serif;font-size:clamp(22px,4vw,34px);color:var(--gold2);letter-spacing:.5px}
+.header p{color:var(--muted);font-size:14px;margin-top:6px}
+
+/* status bar */
+.statusbar{display:flex;gap:10px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot.off{background:var(--red)}
+.dot.idle{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+
+/* grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.col-full{grid-column:span 1!important}}
+.col-full{grid-column:span 2}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4}
+.card h2{font-family:'Amiri',serif;font-size:17px;color:var(--gold2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h2 span{font-size:18px}
+
+/* inputs */
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=time],input[type=password],input[type=url]{
+  width:100%;padding:10px 13px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;outline:none;
+  transition:border-color .2s
+}
+input:focus{border-color:var(--gold)}
+input[type=file]{display:none}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07100a}
+.btn-gold:hover{filter:brightness(1.1)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-green{background:#166534;color:#bbf7d0;border:1px solid #16a34a}
+.btn-green:hover{background:#15803d}
+.btn-red{background:#7f1d1d;color:#fca5a5;border:1px solid #dc2626}
+.btn-red:hover{background:#991b1b}
+.btn-blue{background:#1e3a5f;color:#93c5fd;border:1px solid var(--blue)}
+.btn-blue:hover{background:#1e40af}
+.btn-sm{padding:7px 13px;font-size:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row .f{flex:1;min-width:0}
+
+/* queue stats */
+.qstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.qbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center}
+.qbox .val{font-size:22px;font-weight:700;color:var(--gold2)}
+.qbox .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* schedule slot */
+.slot{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
+.slot-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.days{display:flex;gap:5px;flex-wrap:wrap}
+.day-chip{padding:5px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border);font-size:12px;cursor:pointer;user-select:none;transition:all .15s}
+.day-chip.active{background:var(--gold);color:#07100a;border-color:var(--gold);font-weight:600}
+.toggle-wrap{display:flex;align-items:center;gap:8px}
+input[type=checkbox]{appearance:none;width:38px;height:20px;background:var(--border);border-radius:999px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+input[type=checkbox]:checked{background:var(--green)}
+input[type=checkbox]::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+input[type=checkbox]:checked::after{left:21px}
+
+/* log */
+.log-wrap{background:#03070f;border:1px solid var(--border);border-radius:14px;min-height:320px;max-height:440px;overflow-y:auto;padding:12px;font-family:'Courier New',monospace;font-size:12px;line-height:1.6}
+.log-line{padding:2px 0;word-break:break-all}
+.log-line.info{color:#94a3b8}
+.log-line.success{color:#4ade80}
+.log-line.error{color:#f87171}
+
+/* trigger button */
+.trigger-btn{width:100%;padding:16px;border-radius:14px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#92400e,var(--gold),#92400e);background-size:200% auto;color:#07100a;border:none;cursor:pointer;transition:background-position .4s;font-family:'Amiri',serif;letter-spacing:.5px}
+.trigger-btn:hover{background-position:right center}
+.trigger-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* file upload area */
+.upload-area{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}
+.upload-area:hover{border-color:var(--gold)}
+.upload-area p{color:var(--muted);font-size:13px;margin-top:6px}
+
+.sep{height:1px;background:var(--border);margin:10px 0}
+.helper{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-icon">🕌</div>
+    <h1>Islamic Shorts Automation</h1>
+    <p>Google Drive → CSV Queue → Bengali Video → YouTube Auto Upload</p>
+  </div>
+
+  <div class="statusbar" id="statusBar">
+    <span class="badge"><span class="dot off" id="driveDot"></span><span id="driveText">Drive: সংযুক্ত নয়</span></span>
+    <span class="badge"><span class="dot off" id="ytDot"></span><span id="ytText">YouTube: সংযুক্ত নয়</span></span>
+    <span class="badge"><span class="dot idle" id="jobDot"></span><span id="jobText">Idle</span></span>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1. Google OAuth App -->
+    <div class="card">
+      <h2><span>🔑</span> Google OAuth App</h2>
+      <div style="margin-bottom:10px">
+        <label>Google Client ID</label>
+        <input type="text" id="googleClientId" placeholder="xxx.apps.googleusercontent.com"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label>Google Client Secret</label>
+        <input type="password" id="googleClientSecret" placeholder="••••••••"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>App Base URL (Railway URL)</label>
+        <input type="url" id="appBaseUrl" placeholder="https://your-app.up.railway.app"/>
+      </div>
+      <button class="btn btn-gold" onclick="saveOAuthConfig()">💾 Save</button>
+    </div>
+
+    <!-- 2. Connect Services -->
+    <div class="card">
+      <h2><span>🔗</span> Connect Services</h2>
+      <div style="margin-bottom:12px">
+        <label>Google Drive</label>
+        <div class="row" style="margin-top:6px">
+          <button class="btn btn-green" onclick="connect('drive')">Connect Drive</button>
+          <span class="badge"><span class="dot off" id="driveDot2"></span><span id="driveText2">Disconnected</span></span>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div style="margin-top:12px">
+        <label>YouTube Channel</label>
+        <div class="row" style="margin-top:6px">
+          <button class="btn btn-red" onclick="connect('youtube')">Connect YouTube</button>
+          <span class="badge"><span class="dot off" id="ytDot2"></span><span id="ytText2">Disconnected</span></span>
+        </div>
+        <input type="text" id="channelName" disabled placeholder="Channel name..." style="margin-top:8px"/>
+      </div>
+    </div>
+
+    <!-- 3. Drive Folders -->
+    <div class="card">
+      <h2><span>📁</span> Drive Folders</h2>
+      <div style="margin-bottom:10px">
+        <label>Video Folder ID</label>
+        <input type="text" id="driveVideoFolderId" placeholder="1BxYz..."/>
+        <p class="helper">Background video গুলো এই folder এ রাখো</p>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>Audio Folder ID</label>
+        <input type="text" id="driveAudioFolderId" placeholder="1AbCd..."/>
+        <p class="helper">ওয়াজ/নাশিদ audio গুলো এই folder এ রাখো</p>
+      </div>
+      <button class="btn btn-gold" onclick="saveDriveFolders()">💾 Save Folders</button>
+    </div>
+
+    <!-- 4. API Keys -->
+    <div class="card">
+      <h2><span>🤖</span> API Keys</h2>
+      <div style="margin-bottom:10px">
+        <label>OpenRouter API Key</label>
+        <input type="password" id="openRouterApiKey" placeholder="sk-or-..."/>
+        <p class="helper" id="orMasked"></p>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>Pexels API Key (video fallback)</label>
+        <input type="password" id="pexelsApiKey" placeholder="pexels-..."/>
+        <p class="helper" id="pexMasked"></p>
+      </div>
+      <button class="btn btn-gold" onclick="saveApiKeys()">💾 Save Keys</button>
+    </div>
+
+    <!-- 5. CSV Upload -->
+    <div class="card col-full">
+      <h2><span>📊</span> CSV Queue</h2>
+      <div class="row" style="align-items:flex-start">
+        <div style="flex:1">
+          <label>Excel থেকে CSV export করে upload করো</label>
+          <div class="upload-area" onclick="document.getElementById('csvFile').click()">
+            <div style="font-size:28px">📂</div>
+            <p>Click করো অথবা CSV drag করো</p>
+            <p style="font-size:11px;margin-top:4px">Format: hook, point1, point2, ..., point10</p>
+          </div>
+          <input type="file" id="csvFile" accept=".csv,text/csv" onchange="uploadCsv()"/>
+        </div>
+        <div style="flex:1">
+          <div class="qstats">
+            <div class="qbox"><div class="val" id="qTotal">0</div><div class="lbl">Total Rows</div></div>
+            <div class="qbox"><div class="val" id="qIdx">0</div><div class="lbl">Current</div></div>
+            <div class="qbox" style="grid-column:span 1">
+              <div class="val" style="font-size:13px;line-height:1.3" id="qHook">—</div>
+              <div class="lbl">Current Hook</div>
+            </div>
+          </div>
+          <button class="btn btn-red btn-sm" style="margin-top:10px;width:100%" onclick="resetQueue()">🔄 Queue Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Schedule -->
+    <div class="card col-full">
+      <h2><span>⏰</span> Auto Schedule</h2>
+      <div class="row" style="margin-bottom:14px">
+        <label class="toggle-wrap">
+          <input type="checkbox" id="schedEnabled"/>
+          <span>Schedule চালু করো</span>
+        </label>
+        <span style="font-size:12px;color:var(--muted)">Timezone: Bangladesh (UTC+6)</span>
+        <button class="btn btn-outline btn-sm" onclick="addSlot()">+ Time Slot যোগ করো</button>
+        <button class="btn btn-gold btn-sm" onclick="saveSchedule()">💾 Save Schedule</button>
+      </div>
+      <div id="slots"></div>
+    </div>
+
+    <!-- 7. Manual Trigger -->
+    <div class="card">
+      <h2><span>▶️</span> Manual Trigger</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">YouTube connected না থাকলে preview mode এ video বানাবে (upload হবে না)।</p>
+      <button class="trigger-btn" id="triggerBtn" onclick="trigger()">এখনই একটা Video বানাও</button>
+    </div>
+
+    <!-- 8. Live Log -->
+    <div class="card col-full">
+      <h2><span>📡</span> Live Log</h2>
+      <div class="log-wrap" id="log"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const log = $('log');
+
+function addLog(type, msg, ts) {
+  const d = document.createElement('div');
+  d.className = `log-line ${type||'info'}`;
+  const t = ts ? new Date(ts).toLocaleTimeString('en-GB') : new Date().toLocaleTimeString('en-GB');
+  d.textContent = `[${t}] ${msg}`;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+// SSE
+const es = new EventSource('/api/logs/stream');
+es.onmessage = ev => { try { const e=JSON.parse(ev.data); addLog(e.type, e.msg, e.ts); } catch {} };
+
+// status refresh
+async function refresh() {
+  try {
+    const d = await (await fetch('/api/status')).json();
+    // drive
+    const driveOn = d.drive;
+    [$('driveDot'),$('driveDot2')].forEach(el => el.className = `dot ${driveOn?'on':'off'}`);
+    $('driveText').textContent  = `Drive: ${driveOn?'সংযুক্ত':'সংযুক্ত নয়'}`;
+    $('driveText2').textContent = driveOn ? 'Connected' : 'Disconnected';
+    // youtube
+    const ytOn = d.youtube;
+    [$('ytDot'),$('ytDot2')].forEach(el => el.className = `dot ${ytOn?'on':'off'}`);
+    $('ytText').textContent  = `YouTube: ${ytOn?'সংযুক্ত':'সংযুক্ত নয়'}`;
+    $('ytText2').textContent = ytOn ? 'Connected' : 'Disconnected';
+    $('channelName').value   = d.channelName || '';
+    // job
+    $('jobDot').className = `dot ${d.running?'idle':'on'}`;
+    $('jobText').textContent = d.running ? `Working... (queue: ${d.queued})` : 'Idle';
+    $('triggerBtn').disabled = d.running;
+    // config
+    $('googleClientId').value     = d.googleClientId || '';
+    $('appBaseUrl').value          = d.appBaseUrl || '';
+    $('driveVideoFolderId').value  = d.driveVideoFolderId || '';
+    $('driveAudioFolderId').value  = d.driveAudioFolderId || '';
+    if (d.openRouterMasked) $('orMasked').textContent  = `Saved: ${d.openRouterMasked}`;
+    if (d.pexelsMasked)     $('pexMasked').textContent = `Saved: ${d.pexelsMasked}`;
+    // queue
+    $('qTotal').textContent = d.queue.total || 0;
+    $('qIdx').textContent   = d.queue.total ? (d.queue.idx||0)+1 : 0;
+    $('qHook').textContent  = d.queue.hook || '—';
+    // schedule
+    $('schedEnabled').checked = !!d.schedule?.enabled;
+    renderSlots(d.schedule?.slots || []);
+  } catch(e) { console.error(e); }
+}
+setInterval(refresh, 8000);
+refresh();
+
+// save helpers
+async function post(url, body) {
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  return r.json();
+}
+
+async function saveOAuthConfig() {
+  const p = { googleClientId:$('googleClientId').value.trim(), appBaseUrl:$('appBaseUrl').value.trim() };
+  const s = $('googleClientSecret').value.trim();
+  if (s) p.googleClientSecret = s;
+  const d = await post('/api/config', p);
+  if (d.ok) { addLog('success','OAuth config saved'); $('googleClientSecret').value=''; }
+  else addLog('error', d.error);
+}
+async function saveDriveFolders() {
+  const d = await post('/api/config', { driveVideoFolderId:$('driveVideoFolderId').value.trim(), driveAudioFolderId:$('driveAudioFolderId').value.trim() });
+  if (d.ok) addLog('success','Drive folders saved'); else addLog('error',d.error);
+}
+async function saveApiKeys() {
+  const p = {};
+  const or = $('openRouterApiKey').value.trim();
+  const px = $('pexelsApiKey').value.trim();
+  if (or) p.openRouterApiKey = or;
+  if (px) p.pexelsApiKey = px;
+  const d = await post('/api/config', p);
+  if (d.ok) { addLog('success','API keys saved'); $('openRouterApiKey').value=''; $('pexelsApiKey').value=''; refresh(); }
+  else addLog('error', d.error);
+}
+
+function connect(kind) {
+  window.open(`/auth/${kind}`, '_blank', 'width=560,height=720');
+  setTimeout(refresh, 4000);
+}
+
+// CSV upload
+async function uploadCsv() {
+  const f = $('csvFile').files[0];
+  if (!f) return;
+  const fd = new FormData(); fd.append('csv', f);
+  const r = await fetch('/api/csv/upload', { method:'POST', body:fd });
+  const d = await r.json();
+  if (d.ok) { addLog('success', `CSV uploaded: ${d.total} rows. First: "${d.first}"`); refresh(); }
+  else addLog('error', d.error||'Upload failed');
+  $('csvFile').value = '';
+}
+async function resetQueue() {
+  if (!confirm('Queue reset করবেন?')) return;
+  const d = await post('/api/queue/reset', {});
+  if (d.ok) { addLog('success','Queue reset'); refresh(); } else addLog('error',d.error);
+}
+
+// trigger
+async function trigger() {
+  const d = await post('/api/trigger', {});
+  if (d.ok) addLog('success','Job queued!'); else addLog('error',d.error);
+  setTimeout(refresh, 1000);
+}
+
+// schedule
+const DAYS = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+function renderSlots(slots=[]) {
+  const c = $('slots');
+  c.innerHTML = '';
+  slots.forEach(slot => {
+    const w = document.createElement('div');
+    w.className = 'slot'; w.dataset.id = slot.id;
+    const daysHtml = DAYS.map(d => `<span class="day-chip ${(slot.days||[]).includes(d)?'active':''}" onclick="this.classList.toggle('active')">${d}</span>`).join('');
+    w.innerHTML = `
+      <div class="slot-row">
+        <div><label style="font-size:11px;margin-bottom:4px">সময়</label><input type="time" class="slot-time" value="${slot.time||'09:00'}" style="width:120px"/></div>
+        <label class="toggle-wrap" style="margin-top:18px"><input type="checkbox" class="slot-en" ${slot.enabled!==false?'checked':''}/><span style="font-size:13px">চালু</span></label>
+        <button class="btn btn-red btn-sm" style="margin-top:18px" onclick="this.closest('.slot').remove()">✕</button>
+      </div>
+      <div class="days">${daysHtml}</div>`;
+    c.appendChild(w);
+  });
+}
+function addSlot() {
+  const slots = collectSlots();
+  slots.push({ id:'slot_'+Math.random().toString(36).slice(2,8), time:'09:00', enabled:true, days:[...DAYS] });
+  renderSlots(slots);
+}
+function collectSlots() {
+  return [...document.querySelectorAll('.slot')].map(s => ({
+    id: s.dataset.id,
+    time: s.querySelector('.slot-time').value || '09:00',
+    enabled: s.querySelector('.slot-en').checked,
+    days: [...s.querySelectorAll('.day-chip.active')].map(el=>el.textContent)
+  }));
+}
+async function saveSchedule() {
+  const d = await post('/api/config', { schedule:{ enabled:$('schedEnabled').checked, slots:collectSlots() } });
+  if (d.ok) addLog('success','Schedule saved'); else addLog('error',d.error);
+}
+</script>
+</body>
+</html>
